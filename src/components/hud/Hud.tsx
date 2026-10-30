@@ -50,7 +50,7 @@ function StatusBar() {
 
 function Crosshair() {
   return (
-    <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mix-blend-difference" data-testid="crosshair">
+    <div className="pointer-events-none absolute top-1/2 left-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 mix-blend-difference" data-testid="crosshair">
       <div className="absolute top-1/2 left-1/2 h-0.5 w-5 -translate-x-1/2 -translate-y-1/2 bg-white" />
       <div className="absolute top-1/2 left-1/2 h-5 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-white" />
     </div>
