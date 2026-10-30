@@ -1,0 +1,68 @@
+{
+  "name": "blockhaven",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Blockhaven - a multiplayer voxel sandbox for your local network",
+  "type": "module",
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false --ignore ./src/app --ignore ./src/components --ignore ./.next server/index.ts",
+    "build": "prisma generate && next build --webpack",
+    "start": "cross-env NODE_ENV=production tsx server/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "playwright test",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset --force",
+    "postinstall": "prisma generate"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3",
+    "cross-env": "10.1.0",
+    "dotenv": "^18.0.9",
+    "next": "16.4.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "three": "0.187.0",
+    "tsx": "4.23.15",
+    "ws": "8.22.0",
+    "zod": "4.6.7",
+    "zustand": "5.0.16"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
+    "@types/ws": "^8.18.2",
+    "postcss": "^8.5.32",
+    "prisma": "6.19.3",
+    "tailwindcss": "4.3.3",
+    "typescript": "~5.9.3",
+    "vitest": "^5.0.5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
+      "esbuild",
+      "sharp"
+    ]
+  }
+}

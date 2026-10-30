@@ -1,0 +1,192 @@
+// Blockhaven persistence schema.
+// Terrain is generated deterministically from the world seed, so only
+// modifications relative to the generated terrain are stored (WorldChunk.data).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GameMode {
+  CREATIVE
+  SURVIVAL
+  SPECTATOR
+}
+
+enum WorldVisibility {
+  PUBLIC
+  UNLISTED
+  PRIVATE
+}
+
+enum BuildPermission {
+  EVERYONE
+  MEMBERS
+  OWNER
+}
+
+enum WorldRole {
+  OWNER
+  BUILDER
+  VISITOR
+}
+
+model Player {
+  id          String   @id @default(cuid())
+  displayName String   @db.VarChar(16)
+  /// Appearance colours: { skin, shirt, pants } as #rrggbb strings.
+  appearance  Json
+  /// Free-form profile configuration (reserved for future use).
+  profile     Json     @default("{}")
+  createdAt   DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  sessions    PlayerSession[]
+  ownedWorlds World[]            @relation("WorldOwner")
+  memberships WorldMembership[]
+  worldStates PlayerWorldState[]
+  inventories PlayerInventory[]
+}
+
+model PlayerSession {
+  id         String   @id @default(cuid())
+  playerId   String
+  /// HMAC-SHA256 of the session token. The raw token only lives in the client cookie.
+  tokenHash  String   @unique
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+  expiresAt  DateTime
+  userAgent  String?  @db.VarChar(256)
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@index([expiresAt])
+}
+
+model World {
+  id           String          @id @default(cuid())
+  name         String          @db.VarChar(32)
+  ownerId      String
+  seed         String          @db.VarChar(64)
+  gameMode     GameMode        @default(CREATIVE)
+  visibility   WorldVisibility @default(PUBLIC)
+  maxPlayers   Int             @default(8)
+  /// scrypt hash of the optional world password.
+  passwordHash String?
+  /// Total elapsed in-game ticks (time of day = worldTime % 24000).
+  worldTime    Int             @default(1000)
+  weather      String          @default("clear") @db.VarChar(16)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  lastPlayedAt DateTime?
+
+  owner       Player               @relation("WorldOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  settings    WorldSettings?
+  memberships WorldMembership[]
+  chunks      WorldChunk[]
+  playerState PlayerWorldState[]
+  inventories PlayerInventory[]
+  containers  ContainerInventory[]
+
+  @@index([ownerId])
+  @@index([visibility])
+}
+
+model WorldSettings {
+  worldId         String          @id
+  terrainType     String          @default("default") @db.VarChar(16)
+  dayNightCycle   Boolean         @default(true)
+  weatherEnabled  Boolean         @default(true)
+  buildPermission BuildPermission @default(EVERYONE)
+  includeShowcase Boolean         @default(true)
+  showcaseBuilt   Boolean         @default(false)
+  spawnX          Int?
+  spawnY          Int?
+  spawnZ          Int?
+
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+}
+
+model WorldMembership {
+  id       String    @id @default(cuid())
+  worldId  String
+  playerId String
+  role     WorldRole @default(VISITOR)
+  canBuild Boolean   @default(true)
+  joinedAt DateTime  @default(now())
+
+  world  World  @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([worldId, playerId])
+  @@index([playerId])
+}
+
+/// Sparse modifications of one 16x16 chunk column, relative to generated terrain.
+/// `data` is a deflate-compressed list of (index:u16, block:u8, meta:u8) entries.
+model WorldChunk {
+  worldId   String
+  cx        Int
+  cz        Int
+  revision  Int      @default(0)
+  data      Bytes
+  updatedAt DateTime @updatedAt
+
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@id([worldId, cx, cz])
+}
+
+model PlayerWorldState {
+  playerId     String
+  worldId      String
+  x            Float
+  y            Float
+  z            Float
+  yaw          Float    @default(0)
+  pitch        Float    @default(0)
+  gameMode     GameMode
+  flying       Boolean  @default(false)
+  selectedSlot Int      @default(0)
+  /// Statistics such as blocks placed/broken.
+  stats        Json     @default("{}")
+  updatedAt    DateTime @updatedAt
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  world  World  @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@id([playerId, worldId])
+  @@index([worldId])
+}
+
+model PlayerInventory {
+  playerId  String
+  worldId   String
+  /// Array of inventory slots: null or { id, count }.
+  slots     Json
+  updatedAt DateTime @updatedAt
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  world  World  @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@id([playerId, worldId])
+}
+
+/// Contents of block containers such as chests.
+model ContainerInventory {
+  worldId   String
+  x         Int
+  y         Int
+  z         Int
+  slots     Json
+  updatedAt DateTime @updatedAt
+
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@id([worldId, x, y, z])
+}

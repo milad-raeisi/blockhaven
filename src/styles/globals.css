@@ -1,0 +1,88 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-pixel: ui-monospace, 'SFMono-Regular', 'Cascadia Mono', 'Consolas', 'Liberation Mono', monospace;
+  --color-panel: rgb(24 26 32 / 0.86);
+  --color-grass: #5f9e3a;
+  --color-grass-dark: #3f7027;
+  --color-dirt: #86603f;
+}
+
+html,
+body {
+  height: 100%;
+  background: #0d1017;
+  color: #f2f2f2;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Bevelled voxel-style button. */
+.btn-voxel {
+  position: relative;
+  border: 2px solid #0b0b0b;
+  background: linear-gradient(#7d7d82, #66666b);
+  color: #fff;
+  text-shadow: 2px 2px 0 rgb(0 0 0 / 0.55);
+  box-shadow:
+    inset 2px 2px 0 rgb(255 255 255 / 0.28),
+    inset -2px -3px 0 rgb(0 0 0 / 0.35);
+  transition: filter 80ms ease;
+}
+.btn-voxel:hover:not(:disabled) {
+  background: linear-gradient(#7f9b5f, #5f7f43);
+}
+.btn-voxel:active:not(:disabled) {
+  box-shadow:
+    inset -2px -2px 0 rgb(255 255 255 / 0.2),
+    inset 2px 3px 0 rgb(0 0 0 / 0.35);
+}
+.btn-voxel:disabled {
+  filter: grayscale(1) brightness(0.65);
+  cursor: not-allowed;
+}
+.btn-voxel.btn-primary {
+  background: linear-gradient(#6aad3f, #4c8a2b);
+}
+.btn-voxel.btn-danger {
+  background: linear-gradient(#b8463a, #8f2f26);
+}
+
+.panel-voxel {
+  background: var(--color-panel);
+  border: 2px solid #000;
+  box-shadow:
+    inset 2px 2px 0 rgb(255 255 255 / 0.08),
+    0 10px 30px rgb(0 0 0 / 0.45);
+}
+
+.slot {
+  background: #8b8b8b;
+  border: 2px solid;
+  border-color: #373737 #fff #fff #373737;
+}
+
+.hud-text {
+  text-shadow: 1px 1px 0 rgb(0 0 0 / 0.8);
+}
+
+input[type='range'] {
+  accent-color: #6aad3f;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border: 2px solid #222;
+}

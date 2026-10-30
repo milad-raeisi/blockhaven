@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: blockhaven-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-blockhaven}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-blockhaven}
+      POSTGRES_DB: ${POSTGRES_DB:-blockhaven}
+    # Bound to loopback only: the database is never exposed to the LAN.
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5434}:5432"
+    volumes:
+      - blockhaven-pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-blockhaven} -d ${POSTGRES_DB:-blockhaven}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Optional: run the whole game server in a container (`docker compose --profile app up -d --build`).
+  app:
+    profiles: ["app"]
+    build: .
+    container_name: blockhaven-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-blockhaven}:${POSTGRES_PASSWORD:-blockhaven}@postgres:5432/${POSTGRES_DB:-blockhaven}?schema=public
+      SESSION_SECRET: ${SESSION_SECRET:-change-me-to-a-long-random-string}
+      HOST: 0.0.0.0
+      PORT: 3000
+    ports:
+      - "0.0.0.0:${APP_PORT:-3000}:3000"
+
+volumes:
+  blockhaven-pgdata:
